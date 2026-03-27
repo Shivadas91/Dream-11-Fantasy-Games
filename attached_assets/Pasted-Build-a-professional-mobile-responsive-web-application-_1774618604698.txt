@@ -1,0 +1,49 @@
+Build a professional, mobile-responsive web application for a private IPL Fantasy League using HTML, Tailwind CSS, and JavaScript. The site should have a dark, premium sports-dashboard theme (Navy, Gold, and White colors).
+​1. Landing Page:
+​Display a central logo placeholder at the top.
+​Three large, styled buttons: 'IPL 2026', 'Overall Leaderboard', and 'Archives'.
+​2. Overall Leaderboard Page ('Fantasy Trophy Club'):
+​Heading: 'Fantasy Trophy Club'.
+​List the following data exactly:
+​Shawn 🎖️🎖️🎖️🎖️
+​Jishnu 🎖️🎖️
+​Mobin 🎖️⭐
+​Sivdas 🎖️
+​Jolly ⭐
+​Use a 'Back to Home' button at the top.
+​3. Archives Page:
+​Show a dropdown menu for '2025'.
+​Selecting '2025' shows two buttons: 'CONTEST POINTS TABLE' and 'FANTASY TEAM'.
+​'CONTEST POINTS TABLE' page: Show 'IPL 2025 Points Table' with the specific medal strings and totals provided (> IPL 2025 Points Table_
+____________ 
+1. Shawn: 🥇🥈🥉🥇🥉🥇🥈🥈🥉🥉🥇🥈🥇🥇🥇🥇🥇🥇🥉🥉🥈🥈🥈🥈🥇🥇🥈🥈(62) 🏆 
+2. Sidharth: 🥈🥉🥈🥉🥈🥇🥇🥈🥇🥇🥈🥇🥈🥉🥉🥇🥈🥉🥈🥇🥉🥉🥉🥇🥈🥈(52)
+3. Shiva: 🥉🥇🥇🥈🥈🥈🥈🥈🥉🥈🥉🥉🥉🥈🥇🥇🥇🥇🥉🥉🥉🥉🥈🥈🥉🥇🥈(51)
+4. Jishnu: 🥈🥈🥇🥈🥇🥇🥇🥈🥉🥈🥈🥈🥈🥉🥉🥈🥈🥇🥇🥉🥈(44)
+5. Fenu: 🥈🥈🥇🥇🥉🥈🥉🥉🥈🥈🥈🥇🥈🥈🥇🥈🥈🥈(37)
+6. Mobin: 🥇🥇🥈🥈🥈🥇🥈🥇🥇🥇🥇🥇🥇(35)
+7. Jolly: 🥈🥈🥈🥈🥈🥇🥈🥇🥈🥇🥉🥉(25)
+8. Rijo: 🥇
+9. Vaisakh: 🥈). Ensure medals are perfectly aligned.
+​'FANTASY TEAM' page: Show 'IPL Fantasy Squad Points 2025' with the scores provided (IPL Fantasy Squad Points 2025 (End of Season)
+❗Top 6 players' points
+
+1. Jolly: 6️⃣9️⃣4️⃣9️⃣ 🏆 
+2. Mobin: 6️⃣0️⃣1️⃣5️⃣
+3. Shawn: 5️⃣5️⃣8️⃣5️⃣
+4. Shiva: 5️⃣4️⃣2️⃣5️⃣
+5. Jishnu: 5️⃣0️⃣2️⃣0️⃣
+6. Sidharth: 4️⃣7️⃣4️⃣8️⃣
+7. Rijo: 4️⃣6️⃣2️⃣9️⃣
+8. Vaisakh: 4️⃣5️⃣4️⃣6️⃣
+9. Amit: 4️⃣2️⃣6️⃣6️⃣).
+​4. IPL 2026 Live Page (Google Sheets Integration):
+​This page must fetch live data from a Google Sheet.
+​Technical Requirement: Use the JavaScript fetch() API to pull data from a 'Published to Web' Google Sheet CSV URL.
+​UI: Display 9 distinct tables (3x3 grid on desktop, 1 column on mobile).
+​Each table represents a participant and should show: Player Name, Base Points, Multiplier (2x for Captain), and Total.
+​Ensure the table updates automatically whenever the page is refreshed.
+​5. Privacy & UX:
+​Since this is a private link, no login is needed, but the UI should look clean and exclusive.
+​Ensure all emojis render clearly.
+​Add a smooth fade-in transition between pages

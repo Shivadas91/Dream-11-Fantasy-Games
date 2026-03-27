@@ -16,6 +16,16 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Artifacts
+
+### IPL Fantasy League (`artifacts/ipl-fantasy`)
+Private IPL Fantasy League dashboard. React + Vite, dark Navy/Gold/White theme.
+- Landing page with 3 nav buttons
+- Overall Leaderboard ("Fantasy Trophy Club") with trophy/medal icons
+- Archives page with 2025 contest points + fantasy squad points
+- IPL 2026 live page: fetches from Google Sheets CSV, 3x3 grid of participant tables
+- To enable live data: update `SHEET_CSV_URL` in `artifacts/ipl-fantasy/src/pages/IPL2026.tsx`
+
 ## Structure
 
 ```text
