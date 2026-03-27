@@ -4,7 +4,7 @@ const leaderboard = [
   { name: "Shawn", trophies: "🎖️🎖️🎖️🎖️", rank: 1 },
   { name: "Jishnu", trophies: "🎖️🎖️", rank: 2 },
   { name: "Mobin", trophies: "🎖️⭐", rank: 3 },
-  { name: "Sivdas", trophies: "🎖️", rank: 4 },
+  { name: "Shiva Das", trophies: "🎖️", rank: 4 },
   { name: "Jolly", trophies: "⭐", rank: 5 },
 ];
 
