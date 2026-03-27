@@ -3,5 +3,7 @@
   command = "pnpm run build"
   publish = "dist"
 
-[build.environment]
-  PORT = "5173"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
