@@ -13,7 +13,7 @@ export default function Home() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight gold-gradient leading-tight">
-              DREAM 11 FANTASY LEAGU
+              DREAM 11 FANTASY LEAGUE
             </h1>
             <p className="text-xs mt-2 font-semibold tracking-widest" style={{ color: 'hsl(220 15% 55%)' }}>
               DASHBOARD
