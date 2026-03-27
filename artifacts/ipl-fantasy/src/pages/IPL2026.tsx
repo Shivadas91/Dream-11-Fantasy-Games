@@ -9,6 +9,7 @@ interface PlayerEntry {
   points: number;
   multiplier: number;
   total: number;
+  isCaptain: boolean;
 }
 
 interface Participant {
@@ -18,87 +19,109 @@ interface Participant {
 }
 
 /**
- * The sheet layout is 3 participants side-by-side, repeated 3 times vertically.
- * Column offsets per block: 0, 5, 10
- * Within each block: [Player, Points, Multiplier, Total]
+ * CSV Layout (3 participants side-by-side, 3 groups stacked):
+ *   Name row:    col0=name1, col5=name2, col10=name3  — col1 is empty
+ *   Header row:  Player, Points, Multiplier, Total, ...   (skip)
+ *   Player rows: data at column offsets 0, 5, 10
+ *   Total row:   col0 empty, col3=total1, col8=total2, col13=total3
+ *   Separator:   all-empty row (may be absent between groups)
  *
- * Name row:   col0=name1, col5=name2, col10=name3  (col1 is empty)
- * Header row: Player,Points,Multiplier,Total (skip)
- * Player rows: data at offsets above
- * Total row:  col0 empty, col3=total1, col8=total2, col13=total3
- * Empty row:  separator
+ * KEY FIX: detect a new name row by (col0 non-empty AND col1 empty AND col0 !== "Player")
+ * regardless of whether an empty separator row exists beforehand.
  */
 function parseCSV(text: string): Participant[] {
+  // Normalise CRLF → LF, split into rows, split each row on commas
   const rows = text
+    .replace(/\r/g, "")
     .trim()
     .split("\n")
-    .map((l) => l.replace(/\r/g, "").split(",").map((c) => c.trim()));
+    .map((l) => l.split(",").map((c) => c.trim()));
 
+  const BLOCK_OFFSETS = [0, 5, 10];
   const participants: Participant[] = [];
   let i = 0;
 
+  const isNameRow = (r: string[]) => {
+    const c0 = r[0] ?? "";
+    const c1 = r[1] ?? "";
+    // A name row has a non-empty name in col0, empty col1,
+    // and is NOT the header row ("Player")
+    return c0 !== "" && c1 === "" && c0.toLowerCase() !== "player";
+  };
+
   while (i < rows.length) {
     const row = rows[i];
-    const col0 = row[0] ?? "";
-    const col1 = row[1] ?? "";
 
-    // Detect a participant-name row: col0 is a non-empty name, col1 is empty
-    // and it's not the header "Player" row
-    const isNameRow =
-      col0 !== "" && col1 === "" && col0.toLowerCase() !== "player";
+    if (!isNameRow(row)) {
+      i++;
+      continue;
+    }
 
-    if (isNameRow) {
-      const BLOCK_OFFSETS = [0, 5, 10];
-      const names = BLOCK_OFFSETS.map((o) => row[o] ?? "").filter(Boolean);
-      const blocks: PlayerEntry[][] = [[], [], []];
-      const grandTotals: number[] = [0, 0, 0];
+    // ── We're on a name row ──────────────────────────────────────────────────
+    const names = BLOCK_OFFSETS.map((o) => row[o] ?? "").filter(Boolean);
+    const blocks: PlayerEntry[][] = [[], [], []];
+    const grandTotals: number[] = [0, 0, 0];
 
-      i++; // skip this name row
-      i++; // skip the header row (Player,Points,Multiplier,Total,...)
+    i++; // skip name row
+    i++; // skip header row (Player, Points, Multiplier, Total…)
 
-      while (i < rows.length) {
-        const pr = rows[i];
-        const p0 = pr[0] ?? "";
-        const p1 = pr[1] ?? "";
+    // ── Collect player rows until we hit the next section or EOF ─────────────
+    while (i < rows.length) {
+      const pr = rows[i];
+      const p0 = pr[0] ?? "";
+      const p1 = pr[1] ?? "";
 
-        // Empty separator row → end of this block group
-        if (p0 === "" && p1 === "" && pr.every((c) => c === "")) {
-          i++;
-          break;
-        }
+      // New name row → start of the next section; do NOT consume this row
+      if (isNameRow(pr)) break;
 
-        // Grand-total row: col0 empty but col3/col8/col13 have numbers
-        if (p0 === "" && p1 === "") {
-          grandTotals[0] = parseFloat(pr[3] ?? "0") || 0;
-          grandTotals[1] = parseFloat(pr[8] ?? "0") || 0;
-          grandTotals[2] = parseFloat(pr[13] ?? "0") || 0;
-          i++;
-          continue;
-        }
-
-        // Player data row
-        BLOCK_OFFSETS.forEach((offset, b) => {
-          const playerName = pr[offset] ?? "";
-          if (!playerName) return;
-          const points = parseFloat(pr[offset + 1] ?? "0") || 0;
-          const multiplier = parseFloat(pr[offset + 2] ?? "1") || 1;
-          const total = parseFloat(pr[offset + 3] ?? "0") || 0;
-          blocks[b].push({ player: playerName, points, multiplier, total });
-        });
-
+      // All-empty separator row → consume and stop
+      if (pr.every((c) => c === "")) {
         i++;
+        break;
       }
 
-      names.forEach((name, b) => {
-        participants.push({
-          name,
-          players: blocks[b],
-          grandTotal: grandTotals[b],
+      // Grand-total row: col0 empty, col3/col8/col13 contain totals
+      if (p0 === "" && p1 === "") {
+        grandTotals[0] = parseFloat(pr[3] ?? "0") || 0;
+        grandTotals[1] = parseFloat(pr[8] ?? "0") || 0;
+        grandTotals[2] = parseFloat(pr[13] ?? "0") || 0;
+        i++;
+        continue;
+      }
+
+      // Header row inside inner section (shouldn't happen, but guard)
+      if (p0.toLowerCase() === "player") {
+        i++;
+        continue;
+      }
+
+      // ── Player data row ──────────────────────────────────────────────────
+      BLOCK_OFFSETS.forEach((offset, b) => {
+        const playerName = pr[offset] ?? "";
+        if (!playerName) return;
+        const points = parseFloat(pr[offset + 1] ?? "0") || 0;
+        const multiplier = parseFloat(pr[offset + 2] ?? "1") || 1;
+        const total = parseFloat(pr[offset + 3] ?? "0") || 0;
+        blocks[b].push({
+          player: playerName,
+          points,
+          multiplier,
+          total,
+          isCaptain: multiplier === 2,
         });
       });
-    } else {
+
       i++;
     }
+
+    // Push participants for this group
+    names.forEach((name, b) => {
+      participants.push({
+        name,
+        players: blocks[b],
+        grandTotal: grandTotals[b],
+      });
+    });
   }
 
   return participants;
@@ -113,7 +136,7 @@ function ParticipantTable({ participant }: { participant: Participant }) {
         border: "1px solid hsl(220 30% 22%)",
       }}
     >
-      {/* Header */}
+      {/* Card header */}
       <div
         className="px-4 py-3 flex items-center justify-between shrink-0"
         style={{
@@ -135,7 +158,7 @@ function ParticipantTable({ participant }: { participant: Participant }) {
         </span>
       </div>
 
-      {/* Table */}
+      {/* Table — only Player and Points columns */}
       <table className="w-full text-xs">
         <thead>
           <tr style={{ borderBottom: "1px solid hsl(220 30% 18%)" }}>
@@ -146,80 +169,47 @@ function ParticipantTable({ participant }: { participant: Participant }) {
               Player
             </th>
             <th
-              className="py-2 px-2 text-right font-semibold"
-              style={{ color: "hsl(45 60% 60%)" }}
-            >
-              Pts
-            </th>
-            <th
-              className="py-2 px-2 text-center font-semibold"
-              style={{ color: "hsl(45 60% 60%)" }}
-            >
-              ×
-            </th>
-            <th
               className="py-2 px-3 text-right font-semibold"
               style={{ color: "hsl(45 60% 60%)" }}
             >
-              Total
+              Points
             </th>
           </tr>
         </thead>
         <tbody>
-          {participant.players.map((p, i) => (
+          {participant.players.map((p, idx) => (
             <tr
-              key={i}
+              key={idx}
               style={{
                 borderBottom: "1px solid hsl(220 30% 15%)",
-                background:
-                  p.multiplier === 2
-                    ? "hsl(45 100% 50% / 0.07)"
-                    : "transparent",
+                background: p.isCaptain ? "hsl(45 100% 50% / 0.07)" : "transparent",
               }}
             >
               <td
                 className="py-2 px-3 font-medium"
                 style={{
-                  color:
-                    p.multiplier === 2
-                      ? "hsl(45 100% 75%)"
-                      : "hsl(45 20% 80%)",
+                  color: p.isCaptain ? "hsl(45 100% 75%)" : "hsl(45 20% 80%)",
                 }}
               >
-                {p.multiplier === 2 && (
-                  <span className="mr-1 text-xs font-bold" style={{ color: "hsl(45 100% 65%)" }}>
+                {p.isCaptain && (
+                  <span
+                    className="mr-1 text-xs font-bold"
+                    style={{ color: "hsl(45 100% 65%)" }}
+                  >
                     ©
                   </span>
                 )}
                 {p.player}
               </td>
               <td
-                className="py-2 px-2 text-right"
-                style={{ color: "hsl(220 15% 65%)" }}
-              >
-                {p.points}
-              </td>
-              <td
-                className="py-2 px-2 text-center font-bold"
-                style={{
-                  color:
-                    p.multiplier === 2
-                      ? "hsl(45 100% 65%)"
-                      : "hsl(220 15% 45%)",
-                }}
-              >
-                {p.multiplier}x
-              </td>
-              <td
                 className="py-2 px-3 text-right font-bold"
                 style={{ color: "hsl(45 100% 65%)" }}
               >
-                {p.total}
+                {p.points}
               </td>
             </tr>
           ))}
         </tbody>
-        {/* Grand total footer */}
         <tfoot>
           <tr
             style={{
@@ -228,7 +218,6 @@ function ParticipantTable({ participant }: { participant: Participant }) {
             }}
           >
             <td
-              colSpan={3}
               className="py-2 px-3 text-right text-xs font-bold"
               style={{ color: "hsl(45 80% 60%)" }}
             >
@@ -273,7 +262,6 @@ export default function IPL2026() {
     }
   }, []);
 
-  // Fetch fresh on every page load
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -294,9 +282,7 @@ export default function IPL2026() {
           <div className="flex items-center gap-3">
             <span className="text-3xl trophy-glow">🏆</span>
             <div>
-              <h1 className="text-2xl font-extrabold gold-gradient">
-                IPL 2026 Live
-              </h1>
+              <h1 className="text-2xl font-extrabold gold-gradient">IPL 2026 Live</h1>
               <p className="text-xs mt-0.5" style={{ color: "hsl(220 15% 50%)" }}>
                 {lastUpdated
                   ? `Last updated: ${lastUpdated.toLocaleTimeString()}`
@@ -328,33 +314,27 @@ export default function IPL2026() {
           </div>
         )}
 
-        {/* Loading spinner */}
+        {/* Loading state */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="text-center">
-              <div
-                className="text-5xl mb-4"
-                style={{ display: "inline-block", animation: "spin 1s linear infinite" }}
-              >
-                ⏳
-              </div>
+              <p className="text-4xl mb-3">⏳</p>
               <p style={{ color: "hsl(220 15% 55%)" }}>Loading live data…</p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {participants.map((p) => (
-              <ParticipantTable key={p.name} participant={p} />
-            ))}
-          </div>
+          <>
+            {/* 3×3 grid on desktop, 1 col on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {participants.map((p) => (
+                <ParticipantTable key={p.name} participant={p} />
+              ))}
+            </div>
+            <p className="text-center text-xs mt-6" style={{ color: "hsl(220 15% 35%)" }}>
+              © Captain (2× points) · Data refreshes on every page load
+            </p>
+          </>
         )}
-
-        <p
-          className="text-center text-xs mt-8"
-          style={{ color: "hsl(220 15% 35%)" }}
-        >
-          Data refreshes on every page load · Powered by Google Sheets
-        </p>
       </div>
     </div>
   );
