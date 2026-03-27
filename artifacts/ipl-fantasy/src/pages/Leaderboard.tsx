@@ -57,7 +57,7 @@ export default function Leaderboard() {
           </div>
 
           <div className="mt-5 pt-4 text-center text-xs" style={{ borderTop: '1px solid hsl(220 30% 18%)', color: 'hsl(220 15% 45%)' }}>
-            🎖️ = League Win &nbsp;·&nbsp; ⭐ = Season Best
+            🎖️ = Contest &nbsp;·&nbsp; ⭐ = Fantasy Team
           </div>
         </div>
       </div>

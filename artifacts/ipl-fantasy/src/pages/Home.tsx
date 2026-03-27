@@ -8,15 +8,15 @@ export default function Home() {
       <div className="w-full max-w-md flex flex-col items-center gap-10">
         {/* Logo area */}
         <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full navy-card flex items-center justify-center border-2 gold-border shadow-[0_0_40px_hsl(45_100%_50%/0.2)]">
-            <span className="text-5xl">🏏</span>
+          <div className="w-40 h-40 rounded-2xl overflow-hidden shadow-[0_0_40px_hsl(45_100%_50%/0.2)] border-2 gold-border">
+            <img src="/logo.png" alt="Dream 11 Fantasy League" className="w-full h-full object-cover object-top" />
           </div>
           <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight gold-gradient">
-              IPL Fantasy
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight gold-gradient leading-tight">
+              DREAM 11 FANTASY LEAGU
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'hsl(220 15% 55%)' }}>
-              Private League Dashboard
+            <p className="text-xs mt-2 font-semibold tracking-widest" style={{ color: 'hsl(220 15% 55%)' }}>
+              DASHBOARD
             </p>
           </div>
         </div>
