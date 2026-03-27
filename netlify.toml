@@ -1,7 +1,7 @@
 [build]
   base = "artifacts/ipl-fantasy"
   command = "pnpm run build"
-  publish = "dist"
+  publish = "public"
 
 [[redirects]]
   from = "/*"
