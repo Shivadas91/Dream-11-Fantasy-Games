@@ -127,30 +127,59 @@ function parseCSV(text: string): Participant[] {
   return participants;
 }
 
-function ParticipantTable({ participant }: { participant: Participant }) {
+const RANK_STYLES: Record<number, { bg: string; color: string; label: string }> = {
+  1: { bg: "linear-gradient(135deg,hsl(45 100% 50%),hsl(38 100% 42%))", color: "hsl(220 45% 8%)", label: "🥇" },
+  2: { bg: "linear-gradient(135deg,hsl(210 20% 72%),hsl(210 15% 58%))", color: "hsl(220 45% 8%)", label: "🥈" },
+  3: { bg: "linear-gradient(135deg,hsl(25 80% 55%),hsl(20 70% 42%))",   color: "hsl(220 45% 8%)", label: "🥉" },
+};
+
+function ParticipantTable({ participant, rank, animKey }: {
+  participant: Participant;
+  rank: number;
+  animKey: number;
+}) {
+  const rs = RANK_STYLES[rank];
+
   return (
     <div
+      key={animKey}
       className="rounded-xl overflow-hidden flex flex-col"
       style={{
         background: "linear-gradient(135deg, hsl(220 40% 12%), hsl(220 45% 15%))",
-        border: "1px solid hsl(220 30% 22%)",
+        border: rank <= 3
+          ? `1px solid hsl(45 100% 50% / ${rank === 1 ? "0.55" : rank === 2 ? "0.30" : "0.20"})`
+          : "1px solid hsl(220 30% 22%)",
+        animation: `cardSlideIn 0.35s ease-out both`,
+        animationDelay: `${(rank - 1) * 0.04}s`,
       }}
     >
       {/* Card header */}
       <div
-        className="px-4 py-3 flex items-center justify-between shrink-0"
+        className="px-3 py-2.5 flex items-center gap-2 shrink-0"
         style={{
           background: "linear-gradient(135deg, hsl(220 45% 16%), hsl(220 50% 19%))",
           borderBottom: "1px solid hsl(45 100% 50% / 0.25)",
         }}
       >
-        <span className="font-bold text-sm" style={{ color: "hsl(45 100% 70%)" }}>
-          🏏 {participant.name}
+        {/* Rank badge */}
+        <span
+          className="text-xs font-extrabold w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+          style={
+            rs
+              ? { background: rs.bg, color: rs.color }
+              : { background: "hsl(220 30% 20%)", color: "hsl(220 15% 60%)" }
+          }
+        >
+          {rs ? rs.label : rank}
+        </span>
+
+        <span className="font-bold text-sm flex-1" style={{ color: "hsl(45 100% 70%)" }}>
+          {participant.name}
         </span>
         <span
-          className="text-xs font-bold px-2 py-0.5 rounded-full"
+          className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
           style={{
-            background: "hsl(45 100% 50% / 0.15)",
+            background: rank === 1 ? "hsl(45 100% 50% / 0.25)" : "hsl(45 100% 50% / 0.12)",
             color: "hsl(45 100% 65%)",
           }}
         >
@@ -242,6 +271,8 @@ export default function IPL2026() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // Incremented each fetch so cards re-animate when the order changes
+  const [animKey, setAnimKey] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -252,7 +283,10 @@ export default function IPL2026() {
       const text = await res.text();
       const parsed = parseCSV(text);
       if (parsed.length === 0) throw new Error("No data found in sheet.");
-      setParticipants(parsed);
+      // Sort descending by grandTotal — handles numerical comparison correctly
+      const sorted = [...parsed].sort((a, b) => b.grandTotal - a.grandTotal);
+      setParticipants(sorted);
+      setAnimKey((k) => k + 1);
       setLastUpdated(new Date());
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -326,8 +360,13 @@ export default function IPL2026() {
           <>
             {/* 3×3 grid on desktop, 1 col on mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {participants.map((p) => (
-                <ParticipantTable key={p.name} participant={p} />
+              {participants.map((p, idx) => (
+                <ParticipantTable
+                  key={p.name}
+                  participant={p}
+                  rank={idx + 1}
+                  animKey={animKey}
+                />
               ))}
             </div>
             <p className="text-center text-xs mt-6" style={{ color: "hsl(220 15% 35%)" }}>
