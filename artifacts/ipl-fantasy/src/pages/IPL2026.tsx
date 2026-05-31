@@ -1,5 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
+import confetti from "canvas-confetti";
+
+function fireCornerConfetti() {
+  const shared = {
+    particleCount: 80,
+    spread: 70,
+    startVelocity: 52,
+    gravity: 0.9,
+    ticks: 220,
+    colors: ["#FFD700", "#FFA500", "#FFFFFF", "#FFE566", "#C0A020"],
+  };
+  // Bottom-left burst
+  confetti({ ...shared, origin: { x: 0.05, y: 1 }, angle: 60 });
+  // Bottom-right burst
+  confetti({ ...shared, origin: { x: 0.95, y: 1 }, angle: 120 });
+  // Second wave after a short delay
+  setTimeout(() => {
+    confetti({ ...shared, particleCount: 50, origin: { x: 0.05, y: 1 }, angle: 65 });
+    confetti({ ...shared, particleCount: 50, origin: { x: 0.95, y: 1 }, angle: 115 });
+  }, 350);
+}
 
 const SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ02MbMiLiOIRTa8AkxNuCYoAr07vat6V79VOK8gZUhbmCGjkZgF4OIfbb9iWfS3ck8dMrlHdIdl7yt/pub?gid=2095786768&single=true&output=csv";
@@ -143,14 +164,15 @@ function ParticipantTable({ participant, rank, animKey }: {
   return (
     <div
       key={animKey}
-      className="rounded-xl overflow-hidden flex flex-col"
+      className={`rounded-xl overflow-hidden flex flex-col${rank === 1 ? " leader-card" : ""}`}
       style={{
-        background: "linear-gradient(135deg, hsl(220 40% 12%), hsl(220 45% 15%))",
+        background: rank === 1
+          ? "linear-gradient(135deg, hsl(220 40% 13%), hsl(40 30% 14%))"
+          : "linear-gradient(135deg, hsl(220 40% 12%), hsl(220 45% 15%))",
         border: rank <= 3
-          ? `1px solid hsl(45 100% 50% / ${rank === 1 ? "0.55" : rank === 2 ? "0.30" : "0.20"})`
+          ? `1px solid hsl(45 100% 50% / ${rank === 1 ? "0.65" : rank === 2 ? "0.30" : "0.20"})`
           : "1px solid hsl(220 30% 22%)",
-        animation: `cardSlideIn 0.35s ease-out both`,
-        animationDelay: `${(rank - 1) * 0.04}s`,
+        animationDelay: rank === 1 ? "0s" : `${(rank - 1) * 0.04}s`,
       }}
     >
       {/* Card header */}
@@ -173,7 +195,8 @@ function ParticipantTable({ participant, rank, animKey }: {
           {rs ? rs.label : rank}
         </span>
 
-        <span className="font-bold text-sm flex-1" style={{ color: "hsl(45 100% 70%)" }}>
+        <span className="font-bold text-sm flex-1 flex items-center gap-1" style={{ color: "hsl(45 100% 70%)" }}>
+          {rank === 1 && <span className="leader-crown text-base">👑</span>}
           {participant.name}
         </span>
         <span
@@ -273,6 +296,8 @@ export default function IPL2026() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   // Incremented each fetch so cards re-animate when the order changes
   const [animKey, setAnimKey] = useState(0);
+  // Fire confetti only once per page load
+  const confettiFired = useRef(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -288,6 +313,11 @@ export default function IPL2026() {
       setParticipants(sorted);
       setAnimKey((k) => k + 1);
       setLastUpdated(new Date());
+      // Fire celebratory confetti once when the page first loads with data
+      if (!confettiFired.current) {
+        confettiFired.current = true;
+        setTimeout(fireCornerConfetti, 400);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setError(`Could not load data: ${msg}`);

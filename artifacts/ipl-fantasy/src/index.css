@@ -94,6 +94,30 @@
   to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
 
+@keyframes dance {
+  0%   { transform: rotate(-8deg) scale(1.0); }
+  25%  { transform: rotate(8deg)  scale(1.15); }
+  50%  { transform: rotate(-6deg) scale(1.1); }
+  75%  { transform: rotate(6deg)  scale(1.2); }
+  100% { transform: rotate(-8deg) scale(1.0); }
+}
+
+.leader-crown {
+  display: inline-block;
+  animation: dance 0.9s infinite ease-in-out;
+  transform-origin: bottom center;
+}
+
+@keyframes leaderGlow {
+  0%   { box-shadow: 0 0 12px hsl(45 100% 50% / 0.35), 0 0 28px hsl(45 100% 50% / 0.15); }
+  50%  { box-shadow: 0 0 22px hsl(45 100% 50% / 0.55), 0 0 48px hsl(45 100% 50% / 0.25); }
+  100% { box-shadow: 0 0 12px hsl(45 100% 50% / 0.35), 0 0 28px hsl(45 100% 50% / 0.15); }
+}
+
+.leader-card {
+  animation: cardSlideIn 0.35s ease-out both, leaderGlow 2s infinite ease-in-out !important;
+}
+
 .gold-text {
   color: hsl(45 100% 55%);
 }
